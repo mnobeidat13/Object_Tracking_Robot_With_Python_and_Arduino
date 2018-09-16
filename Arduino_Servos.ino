@@ -1,15 +1,14 @@
 #include <Servo.h>
 #include <math.h>
 
-int data;
-String s1, s2;
+String s1, s2; 
 String var;
-Servo servo1;
+Servo servo1, servo2;     // create servo object to control a servo
 String strings[2];
-Servo servo2;// create servo object to control a servo
-// twelve servo objects can be created on most boards
-int pos = 0;    // variable to store the servo position
+int pos = 0;              // variable to store the servo position
 
+
+// This function splits a given string into two strings seperated with with seperator 
 String getValue(String data, char separator, int index)
 {
     int found = 0;
@@ -25,10 +24,9 @@ String getValue(String data, char separator, int index)
     }
     return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
+
 void setup() { 
   Serial.begin(9600); //initialize serial COM at 9600 baudrate
-  pinMode(LED_BUILTIN, OUTPUT); //make the LED pin (13) as output
-  digitalWrite (LED_BUILTIN, LOW);
   servo1.attach(9);
   servo2.attach(10);
   Serial.println("Hi!, I am Arduino");
@@ -37,36 +35,27 @@ void setup() {
 }
  
 void loop() {
- if (Serial.available()){
-//    data = Serial.parseInt();
-var = Serial.readString();
-if (var != "sweep"){ 
-String xval = getValue(var, '#', 0);
-String yval = getValue(var, '#', 1);
-servo1.write(atoi(xval.c_str()));
-servo2.write(atoi(yval.c_str()));
-//delay(50);
+if (Serial.available()){
+  var = Serial.readString();
+  if (var != "sweep"){ 
+  String xval = getValue(var, '#', 0);
+  String yval = getValue(var, '#', 1);
+  servo1.write(atoi(xval.c_str()));
+  servo2.write(atoi(yval.c_str()));
 }
-else {
-  for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
-    // in steps of 1 degree
-     if (Serial.readString() != "sweep") break;
+else{
+  for (pos = 0; pos <= 180; pos += 1) {        // goes from 0 degrees to 180 degrees in steps of 1 degree
+    if (Serial.readString() != "sweep") break;
     servo1.write(pos);
-    servo2.write(pos);// tell servo to go to position in variable 'pos'
-    delay(500);                       // waits 15ms for the servo to reach the position
-   
-    
-  }
+    servo2.write(pos);                // tell servo to go to position in variable 'pos'
+    delay(200);                       // waits 200ms for the servo to reach the position   
+    }
   for (pos = 180; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
-        if (Serial.readString() != "sweep") break;
-
+    if (Serial.readString() != "sweep") break;
     servo1.write(pos);
     servo2.write(pos);// tell servo to go to position in variable 'pos'
-    delay(500);                       // waits 15ms for the servo to reach the position
+    delay(200);                       // waits 200ms for the servo to reach the position
+    }
   }
 }
- }
 }
-
-
- 
