@@ -7,7 +7,7 @@ import time  # Required to use delay functions
 class screen_shot:
 
     def __init__(self):
-        self.refPt = []
+        self.refPt = []      #reference point for cropping
         self.cropping = False
         self.snap_shot = None
         self.template = None
@@ -24,25 +24,18 @@ class screen_shot:
             k = cv2.waitKey(1)
 
             if k == ord("q"):
-                # ESC pressed
-                print("Escape hit, closing...")
+                # q pressed
                 break
             elif k % 256 == 32:
                 # SPACE pressed
-                # img_name = "source.jpg"
-                # cv2.imwrite(img_name, frame)
-                # print("{} written!".format(img_name))
-                # img_counter += 1
                 self.snap_shot = frame
-                cv2.imwrite("snap.jpg", frame)
+                cv2.imwrite("snap.jpg", frame) #in case self.snap_shot was none
         cam.release()
         cv2.destroyAllWindows()
 
     def click_and_crop(self, event, x, y, flags, param):
-
         # if the left mouse button was clicked, record the starting
-        # (x, y) coordinates and indicate that cropping is being
-        # performed
+        # (x, y) coordinates and indicate that cropping is being performed
         if event == cv2.EVENT_LBUTTONDOWN:
             self.refPt = [(x, y)]
             self.cropping = True
@@ -75,34 +68,32 @@ class screen_shot:
 
     def match(self):
         cap = cv2.VideoCapture(0)
-        #(y, x)
+        #Note that cv2 saves coordiantes in (y, x) order
         while True:
             ret, img_rgb = cap.read()
-            # img_rgb = cv2.imread("snap.jpg")
+            # img_rgb = cv2.imread("snap.jpg") #in case self.snap_shot was empty
             img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2GRAY)
 
             template = cv2.imread('template.jpg', 0)
             w, h = template.shape[::-1]
 
             res = cv2.matchTemplate(img_gray, template, cv2.TM_CCOEFF_NORMED)
-            threshold = 0.8
-            # loc = np.where(res >= threshold)
-            (_, maxVal, _, locMax) = cv2.minMaxLoc(res)
+            threshold = 0.8    #Threshold can be changed
+            (_, maxVal, _, locMax) = cv2.minMaxLoc(res)            #saves the best match
             if maxVal > threshold:
-                pt = locMax #(loc[1][0], loc[0][0])
-                cenT = (pt[0]+w/2, pt[1]+h/2)
-                cenF = (img_rgb.shape[0]/2, img_rgb.shape[1]/2)
-                degX = int(cenT[0]/3.555)
-                degY = int(cenT[1] / 2.666)
+                cenT = (locMax[0]+w/2, locMax[1]+h/2)              #Center of template
+                cenF = (img_rgb.shape[0]/2, img_rgb.shape[1]/2)    #Center of image
+                degX = int(cenT[0]/3.555)                          #mapping 640 pixel into 180 degrees
+                degY = int(cenT[1] / 2.666)                        #mapping 480 pixel into 180 degrees
                 print(maxVal, locMax)
-                # arduino.write(((str(degX)+'#'+str(degY)).encode()))
-                # time.sleep(0.05)
-                # arduino.write((str(degY).encode()))
-                # time.sleep(0.05)
+                arduino.write(((str(degX)+'#'+str(degY)).encode()))
+                time.sleep(0.05)                                   #This delay is requierd so the arduino does not miss any data
+                arduino.write((str(degY).encode()))
+                time.sleep(0.05)
                 cv2.rectangle(img_rgb, pt, (pt[0] + w, pt[1] + h), (0, 0, 255), 1)
             else:
                 print("No matches found")
-                # arduino.write("sweep".encode())
+                arduino.write("sweep".encode())
 
 
             cv2.imshow("img", img_rgb)
@@ -110,10 +101,10 @@ class screen_shot:
             if k == ord("q"):
                 break
 
-
-# arduino = serial.Serial('com19', 9600)  # Create Serial port object called arduinoSerialData
-# time.sleep(2)  # wait for 2 secounds for the communication to get established
-# print(arduino.readline()) # read the serial data and print it as line
+#Setting up Serial connection 
+arduino = serial.Serial('com19', 9600)  # Create Serial port object called arduino // serial port name "com19" should be changed to match the arduino
+time.sleep(2)  # wait for 2 secounds for the communication to get established
+print(arduino.readline()) # read the serial data and print it as line #To make sure that serial connections was established correctly 
 
 obj = screen_shot()
 obj.take_snap()
